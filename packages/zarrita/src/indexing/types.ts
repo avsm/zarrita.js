@@ -44,7 +44,23 @@ export type Options = {
 	create_queue?: () => ChunkQueue;
 };
 
-export type GetOptions<O> = Options & { opts?: O };
+export type ProgressEvent = {
+	/** Bytes received so far across all chunks */
+	bytes_loaded: number;
+	/** Total expected bytes, or undefined if unknown */
+	bytes_total: number | undefined;
+	/** Number of chunks fully fetched so far */
+	chunks_completed: number;
+	/** Total number of chunks to fetch */
+	chunks_total: number;
+};
+
+export type ProgressCallback = (event: ProgressEvent) => void;
+
+export type GetOptions<O> = Options & {
+	opts?: O;
+	onProgress?: ProgressCallback;
+};
 
 export type SetOptions = Options;
 

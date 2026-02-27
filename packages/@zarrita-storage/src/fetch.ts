@@ -1,4 +1,9 @@
-import type { AbsolutePath, AsyncReadable, RangeQuery } from "./types.js";
+import type {
+	AbsolutePath,
+	AsyncReadable,
+	OnBytes,
+	RangeQuery,
+} from "./types.js";
 import { fetch_range, merge_init } from "./util.js";
 
 function resolve(root: string | URL, path: AbsolutePath): URL {
@@ -21,6 +26,42 @@ async function handle_response(
 	}
 	if (response.status === 200 || response.status === 206) {
 		return new Uint8Array(await response.arrayBuffer());
+	}
+	throw new Error(
+		`Unexpected response status ${response.status} ${response.statusText}`,
+	);
+}
+
+async function handle_response_with_progress(
+	response: Response,
+	onBytes: OnBytes,
+): Promise<Uint8Array | undefined> {
+	if (response.status === 404) {
+		return undefined;
+	}
+	if (response.status === 200 || response.status === 206) {
+		if (!response.body) {
+			// Fallback if body stream is not available
+			let buffer = new Uint8Array(await response.arrayBuffer());
+			onBytes(buffer.byteLength);
+			return buffer;
+		}
+		let chunks: Uint8Array[] = [];
+		let reader = response.body.getReader();
+		while (true) {
+			let { done, value } = await reader.read();
+			if (done || !value) break;
+			chunks.push(value);
+			onBytes(value.byteLength);
+		}
+		let total = chunks.reduce((acc, c) => acc + c.byteLength, 0);
+		let result = new Uint8Array(total);
+		let offset = 0;
+		for (let chunk of chunks) {
+			result.set(chunk, offset);
+			offset += chunk.byteLength;
+		}
+		return result;
 	}
 	throw new Error(
 		`Unexpected response status ${response.status} ${response.statusText}`,
@@ -77,30 +118,38 @@ class FetchStore implements AsyncReadable<RequestInit> {
 
 	async get(
 		key: AbsolutePath,
-		options: RequestInit = {},
+		options: RequestInit & { onBytes?: OnBytes } = {},
 	): Promise<Uint8Array | undefined> {
+		let { onBytes, ...init } = options;
 		let href = resolve(this.url, key).href;
-		let response = await fetch(href, this.#merge_init(options));
+		let response = await fetch(href, this.#merge_init(init));
+		if (onBytes) {
+			return handle_response_with_progress(response, onBytes);
+		}
 		return handle_response(response);
 	}
 
 	async getRange(
 		key: AbsolutePath,
 		range: RangeQuery,
-		options: RequestInit = {},
+		options: RequestInit & { onBytes?: OnBytes } = {},
 	): Promise<Uint8Array | undefined> {
+		let { onBytes, ...init } = options;
 		let url = resolve(this.url, key);
-		let init = this.#merge_init(options);
+		let merged = this.#merge_init(init);
 		let response: Response;
 		if ("suffixLength" in range) {
 			response = await fetch_suffix(
 				url,
 				range.suffixLength,
-				init,
+				merged,
 				this.#use_suffix_request,
 			);
 		} else {
-			response = await fetch_range(url, range.offset, range.length, init);
+			response = await fetch_range(url, range.offset, range.length, merged);
+		}
+		if (onBytes) {
+			return handle_response_with_progress(response, onBytes);
 		}
 		return handle_response(response);
 	}

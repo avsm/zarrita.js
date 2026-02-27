@@ -9,23 +9,31 @@ export type RangeQuery =
 			suffixLength: number;
 	  };
 
+export type OnBytes = (delta: number) => void;
+
 export type Readable<GetOptions = unknown> =
 	| AsyncReadable<GetOptions>
 	| SyncReadable<GetOptions>;
 export interface AsyncReadable<Options = unknown> {
-	get(key: AbsolutePath, opts?: Options): Promise<Uint8Array | undefined>;
+	get(
+		key: AbsolutePath,
+		opts?: Options & { onBytes?: OnBytes },
+	): Promise<Uint8Array | undefined>;
 	getRange?(
 		key: AbsolutePath,
 		range: RangeQuery,
-		opts?: Options,
+		opts?: Options & { onBytes?: OnBytes },
 	): Promise<Uint8Array | undefined>;
 }
 export interface SyncReadable<Options = unknown> {
-	get(key: AbsolutePath, opts?: Options): Uint8Array | undefined;
+	get(
+		key: AbsolutePath,
+		opts?: Options & { onBytes?: OnBytes },
+	): Uint8Array | undefined;
 	getRange?(
 		key: AbsolutePath,
 		range: RangeQuery,
-		opts?: Options,
+		opts?: Options & { onBytes?: OnBytes },
 	): Uint8Array | undefined;
 }
 

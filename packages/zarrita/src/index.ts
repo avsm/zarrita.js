@@ -16,6 +16,8 @@ export { set as _zarrita_internal_set } from "./indexing/set.js";
 export type {
 	GetOptions,
 	Indices,
+	ProgressCallback,
+	ProgressEvent,
 	Projection,
 	SetOptions,
 	Slice,
