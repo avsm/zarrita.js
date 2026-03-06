@@ -1,6 +1,7 @@
 // re-export all the storage interface types
 export type * from "@zarrita/storage";
-// re-export fetch store from storage
+// re-export stores from storage
+export { default as CoalescingStore } from "@zarrita/storage/coalescing";
 export { default as FetchStore } from "@zarrita/storage/fetch";
 export { registry } from "./codecs.js";
 export type { Listable } from "./consolidated.js";

@@ -363,7 +363,7 @@ export async function decompress(
 	data: ArrayBuffer | ArrayBufferView | Response,
 	{ format, signal }: { format: CompressionFormat; signal?: AbortSignal },
 ): Promise<ArrayBuffer> {
-	const response = data instanceof Response ? data : new Response(data);
+	const response = data instanceof Response ? data : new Response(data as BodyInit);
 	assert(response.body, "Response does not contain body.");
 	try {
 		const decompressedResponse = new Response(
