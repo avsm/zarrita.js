@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
@@ -15,10 +14,13 @@ class FileSystemStore implements AsyncMutable {
 
 	async get(key: AbsolutePath): Promise<Uint8Array | undefined> {
 		let fp = path.join(this.root, strip_prefix(key));
-		return fs.promises.readFile(fp).catch((err) => {
-			if (err.code === "ENOENT") return undefined;
+		try {
+			let buf = await fs.promises.readFile(fp);
+			return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+		} catch (err) {
+			if (is_error_no_entry(err)) return undefined;
 			throw err;
-		});
+		}
 	}
 
 	async getRange(
@@ -31,7 +33,7 @@ class FileSystemStore implements AsyncMutable {
 			filehandle = await fs.promises.open(fp, "r");
 			if ("suffixLength" in range) {
 				let stats = await filehandle.stat();
-				let data = Buffer.alloc(range.suffixLength);
+				let data = new Uint8Array(range.suffixLength);
 				await filehandle.read(
 					data,
 					0,
@@ -40,7 +42,7 @@ class FileSystemStore implements AsyncMutable {
 				);
 				return data;
 			}
-			let data = Buffer.alloc(range.length);
+			let data = new Uint8Array(range.length);
 			await filehandle.read(data, 0, range.length, range.offset);
 			return data;
 		} catch (err: unknown) {
