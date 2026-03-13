@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as url from "node:url";
-import { FileSystemStore } from "@zarrita/storage";
+import FileSystemStore from "@zarrita/storage/fs";
 import { describe, expect, it } from "vitest";
 import * as zarr from "zarrita";
 

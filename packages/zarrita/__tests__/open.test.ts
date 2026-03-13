@@ -2,11 +2,8 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as url from "node:url";
 import { Float16Array } from "@petamoriken/float16";
-import {
-	type AbsolutePath,
-	FileSystemStore,
-	ZipFileStore,
-} from "@zarrita/storage";
+import { type AbsolutePath, ZipFileStore } from "@zarrita/storage";
+import FileSystemStore from "@zarrita/storage/fs";
 import {
 	afterAll,
 	afterEach,

@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import * as url from "node:url";
-import { FileSystemStore } from "@zarrita/storage";
+import FileSystemStore from "@zarrita/storage/fs";
 import { assert, describe, expect, it } from "vitest";
 import { tryWithConsolidated, withConsolidated } from "../src/consolidated.js";
 import { NodeNotFoundError } from "../src/errors.js";
